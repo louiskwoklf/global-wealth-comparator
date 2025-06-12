@@ -20,9 +20,12 @@ URL_LADDER  = "https://wid.world/simulatorapp/jsongenerated/thweal_{iso}.json"
 EXCLUDED = {
     # historical states
     "CS", "DD", "SU", "YU",
-    # regional / “other” buckets
-    "OA", "OB", "OC", "OD", "OE", "OH", "OI",
-    "OJ", "OK", "OL", "QL", "QM", "XB", "XS",
+
+    # regional / “other” buckets (full list)
+    "OA", "OB", "OC", "OD", "OE", "OH", "OI",    # Other …
+    "OJ", "OK", "OL", "QL", "QM", "XB", "XS",    # Other / composite
+    "QE", "WO", "XF", "XL", "XN", "XR",          # Euro-area, World, etc.
+
     # global aggregate
     "ZZ",
 }
