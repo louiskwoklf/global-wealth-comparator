@@ -1,117 +1,90 @@
 #!/usr/bin/env python3
-"""
-Build a country-by-country wealth-percentile ladder sheet from WID.world.
-
-• Rows  : “ISO (CUR)” – ISO alpha-2 code plus three-letter currency.
-• Cols  : p0p1 … p99p100, newest available year (2023 at time of writing).
-"""
+"""Generate a CSV of wealth-percentile thresholds (p0p1…p99p100) for every
+ISO-2 country in constant-2011 PPP international dollars (i$)."""
 
 import argparse
 import re
 from pathlib import Path
+from typing import Dict, List, Tuple
 
 import pandas as pd
 import requests
 
-# ---------------------------------------------------------------------------
-URL_CDICT   = "https://wid.world/codes-dictionary/"
-URL_LADDER  = "https://wid.world/simulatorapp/jsongenerated/thweal_{iso}.json"
+URL_CDICT = "https://wid.world/codes-dictionary/"
+URL_LADDER = "https://wid.world/simulatorapp/jsongenerated/thweal_{iso}.json"
 
+# Skip historic states and aggregates
 EXCLUDED = {
-    # historical states
-    "CS", "DD", "SU", "YU",
-
-    # regional / “other” buckets (full list)
-    "OA", "OB", "OC", "OD", "OE", "OH", "OI",    # Other …
-    "OJ", "OK", "OL", "QL", "QM", "XB", "XS",    # Other / composite
-    "QE", "WO", "XF", "XL", "XN", "XR",          # Euro-area, World, etc.
-
-    # global aggregate
-    "ZZ",
+    "CS", "DD", "SU", "YU", "OA", "OB", "OC", "OD", "OE", "OH", "OI",
+    "OJ", "OK", "OL", "QL", "QM", "XB", "XS", "QE", "WO", "XF", "XL",
+    "XN", "XR", "ZZ",
 }
 
+BAND_RE = re.compile(r"p(\d+)p(\d+)$")
 
-def wid_iso_country_codes(exclude=EXCLUDED) -> list[str]:
+
+def wid_iso_country_codes() -> List[str]:
+    """ISO-2 codes recognised by WID (minus `EXCLUDED`)."""
     html = requests.get(URL_CDICT, timeout=30).text
     codes = set(re.findall(r"<td[^>]*>\s*([A-Z]{2})\s*</td>", html))
-    return sorted(c for c in codes if c not in exclude)
+    return sorted(c for c in codes if c not in EXCLUDED)
 
 
-def wealth_ladder(iso: str) -> tuple[pd.Series, str]:
-    url  = URL_LADDER.format(iso=iso)
-    resp = requests.get(url, timeout=30)
-    if resp.status_code != 200:
-        raise ValueError(f"{iso}: endpoint {resp.status_code}")
-    data = resp.json()
+def wealth_ladder(iso: str) -> Tuple[pd.Series, int]:
+    r = requests.get(URL_LADDER.format(iso=iso), timeout=30)
+    if r.status_code != 200:
+        raise ValueError(f"http {r.status_code}")
+    data: Dict[str, list] = r.json()
 
-    years = {v["y"]
-             for ladd in data.values()
-             for v in ladd[0].get(iso, {}).get("values", [])}
-    if not years:
-        raise ValueError(f"{iso}: no ladder values")
-    latest = max(years)
+    try:
+        latest = max(v["y"] for ladd in data.values()
+                      for v in ladd[0].get(iso, {}).get("values", []))
+    except ValueError:
+        raise ValueError("no ladder values")
 
-    ladder, currency = {}, None
-    band_re = re.compile(r"p(\d+)p(\d+)$")
-
+    ladder: Dict[str, float] = {}
     for key, ladd in data.items():
-        if not key.startswith("thweal_p"):
-            continue
-        band = key.split("_")[1]
-        if not band_re.match(band):
-            continue
-
-        block = ladd[0].get(iso)
-        if not block:
-            continue
-
-        if currency is None:
-            meta = block.get("meta", {})
-            currency = meta.get("unit") or meta.get("unit_symbol") or meta.get("unit_name") or "UNK"
-
-        for entry in block["values"]:
-            if entry["y"] == latest:
-                ladder[band] = entry["v"]
-                break
+        if key.startswith("thweal_p"):
+            band = key.split("_")[1]
+            if BAND_RE.match(band):
+                for entry in (ladd[0].get(iso) or {}).get("values", []):
+                    if entry["y"] == latest:
+                        ladder[band] = entry["v"]
+                        break
 
     if not ladder:
-        raise ValueError(f"{iso}: ladder missing for {latest}")
+        raise ValueError(f"no {latest} data")
 
-    ordered = dict(sorted(ladder.items(),
-                          key=lambda kv: int(band_re.match(kv[0]).group(1))))
-    return pd.Series(ordered, name=latest), currency
+    ladder = dict(sorted(ladder.items(), key=lambda kv: int(BAND_RE.match(kv[0]).group(1))))
+    return pd.Series(ladder, name=latest), latest
 
 
-def build_ladder_dataframe() -> tuple[pd.DataFrame, list[tuple[str, str]]]:
-    rows, skipped = {}, []
+def build_ladders() -> Tuple[pd.DataFrame, List[Tuple[str, str]]]:
+    rows: Dict[str, pd.Series] = {}
+    skipped: List[Tuple[str, str]] = []
+
     for iso in wid_iso_country_codes():
         try:
-            series, cur = wealth_ladder(iso)
-            rows[f"{iso} ({cur})"] = series
-        except Exception as exc:
-            skipped.append((iso, str(exc)))
+            rows[iso], _ = wealth_ladder(iso)
+        except Exception as e:
+            skipped.append((iso, str(e)))
+
     df = pd.DataFrame(rows).T
-    df.index.name = "country"
+    df.index.name = "iso2"
     return df, skipped
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-o", "--output",
-        default="wealth_percentile_ladder.csv",
-        help="CSV file to write (default: %(default)s)",
-    )
-    args = parser.parse_args()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-o", "--output", default="wealth_percentile_ladder.csv")
+    args = ap.parse_args()
 
-    df, skipped = build_ladder_dataframe()
+    df, skipped = build_ladders()
     df.to_csv(Path(args.output).expanduser(), float_format="%.3f")
 
     print(f"✔ saved {len(df)} countries → {args.output}")
-    if skipped:
-        print("skipped:")
-        for iso, reason in skipped:
-            print(f"{reason}")
+    for iso, reason in skipped:
+        print(f"{iso}: {reason}")
 
 
 if __name__ == "__main__":
