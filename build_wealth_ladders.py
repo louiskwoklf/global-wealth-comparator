@@ -108,7 +108,7 @@ def main() -> None:
     if skipped:
         print("skipped:")
         for iso, reason in skipped:
-            print(f"  {iso}: {reason}")
+            print(f"{reason}")
 
 
 if __name__ == "__main__":
