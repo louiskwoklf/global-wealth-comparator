@@ -76,7 +76,7 @@ def build_ladders() -> Tuple[pd.DataFrame, List[Tuple[str, str]]]:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("-o", "--output", default="wealth_percentile_ladders.csv")
+    ap.add_argument("-o", "--output", default="wealth_ladders.csv")
     args = ap.parse_args()
 
     df, skipped = build_ladders()
