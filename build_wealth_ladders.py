@@ -73,7 +73,7 @@ def build_ladders() -> Tuple[pd.DataFrame, List[Tuple[str, str]]]:
 
 
 def main() -> None:
-    output_path = Path("data/outputs/wealth_ladders.csv")
+    output_path = Path("data/processed/wealth_ladders.csv")
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     df, skipped = build_ladders()
