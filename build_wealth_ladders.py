@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Generate a CSV of wealth-percentile thresholds (p0p1…p99p100) for every
-ISO-2 country in constant-2011 PPP international dollars (i$)."""
+ISO-2 country in constant PPP international dollars (i$)."""
 
-import argparse
 import re
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -24,7 +23,6 @@ BAND_RE = re.compile(r"p(\d+)p(\d+)$")
 
 
 def wid_iso_country_codes() -> List[str]:
-    """ISO-2 codes recognised by WID (minus `EXCLUDED`)."""
     html = requests.get(URL_CDICT, timeout=30).text
     codes = set(re.findall(r"<td[^>]*>\s*([A-Z]{2})\s*</td>", html))
     return sorted(c for c in codes if c not in EXCLUDED)
@@ -70,19 +68,18 @@ def build_ladders() -> Tuple[pd.DataFrame, List[Tuple[str, str]]]:
             skipped.append((iso, str(e)))
 
     df = pd.DataFrame(rows).T
-    df.index.name = "iso2"
+    df.index.name = "Country Code"
     return df, skipped
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-o", "--output", default="wealth_ladders.csv")
-    args = ap.parse_args()
+    output_path = Path("data/outputs/wealth_ladders.csv")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     df, skipped = build_ladders()
-    df.to_csv(Path(args.output).expanduser(), float_format="%.3f")
+    df.to_csv(output_path, float_format="%.3f")
 
-    print(f"✔ saved {len(df)} countries → {args.output}")
+    print(f"✔ saved {len(df)} countries → {output_path}")
     for iso, reason in skipped:
         print(f"{iso}: {reason}")
 
