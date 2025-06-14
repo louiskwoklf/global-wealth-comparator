@@ -84,7 +84,7 @@ export default function GlobalWealthComparator() {
             <DialogClose asChild key={country}>
               <Button
                 variant="ghost"
-                className="w-full justify-start text-left whitespace-nowrap border rounded-md px-3 py-2 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 hover:bg-gray-600 hover:text-white hover:border-gray-800 transition-colors duration-200 ease-in-out"
+                className="w-full justify-start text-left whitespace-nowrap border rounded-md px-3 py-2 hover:bg-gray-600 hover:text-white hover:border-gray-800 transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                 onClick={() => onSelect(country)}
                 type="button"
               >
@@ -170,7 +170,7 @@ export default function GlobalWealthComparator() {
                       />
                     </div>
                     <DialogClose asChild>
-                      <Button className="w-full bg-black text-white border border-transparent hover:bg-gray-500 hover:text-black hover:border-gray-800 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0" type="button">
+                      <Button className="w-full bg-black text-white border border-transparent hover:bg-gray-500 hover:text-black hover:border-gray-800 transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0" type="button">
                         OK
                       </Button>
                     </DialogClose>
@@ -210,7 +210,7 @@ export default function GlobalWealthComparator() {
               <Button
                 onClick={handleSubmit}
                 disabled={!isFormValid}
-                className="w-full bg-black text-white border border-transparent hover:bg-gray-500 hover:text-black hover:border-gray-800 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-black text-white border border-transparent hover:bg-gray-500 hover:text-black hover:border-gray-800 transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
               >
                 Submit
