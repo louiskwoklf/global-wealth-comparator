@@ -4,6 +4,7 @@ import { useLocation, Link } from 'react-router-dom';
 export default function ResultsPage() {
   const { state } = useLocation();
   const [result, setResult] = useState(state);
+  const topPercent = 100 - result.wealth_percentile;
 
   // If you’d rather re-fetch based on URL params:
   // useEffect(() => {
@@ -16,29 +17,16 @@ export default function ResultsPage() {
   if (!result) return <p>Loading…</p>;
 
   return (
-    <div className="p-6 max-w-xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-4">Your Wealth Comparison</h1>
-      <ul className="space-y-2">
-        <li>
-          <strong>Original Net Worth:</strong> {result.input_currency} {result.original_net_worth.toLocaleString()}
-        </li>
-        <li>
-          <strong>In {result.official_currency}:</strong> {result.converted_net_worth_in_official.toLocaleString()}
-        </li>
-        <li>
-          <strong>After Deflation to 2023 EOY:</strong> {result.deflated_net_worth.toLocaleString()}
-        </li>
-        <li>
-          <strong>PPP-Adjusted:</strong> {result.international_net_worth.toLocaleString()}
-        </li>
-        <li>
-          <strong>Wealth Bracket:</strong> you’re in the “{result.wealth_threshold.toLocaleString()}” threshold ({result.wealth_percentile} percentile) in {result.target_country}
-        </li>
-      </ul>
-
-      <Link to="/" className="mt-6 inline-block text-blue-600 hover:underline">
-        ← Compare again
-      </Link>
+    <div className="min-h-screen bg-[#f9f7f3] text-neutral-800 flex items-center justify-center p-4">
+      <div className="w-full max-w-sm space-y-6 text-center">
+        <h1 className="text-2xl font-semibold text-center">Wealth Comparison Results</h1>
+        <p className="text-lg">
+          {`With ${result.input_currency} ${result.original_net_worth.toLocaleString()}, you're in the top ${topPercent}% in ${result.target_country}.`}
+        </p>
+        <Link to="/" className="mt-4 inline-block text-blue-600 hover:underline cursor-pointer">
+          ← Compare again
+        </Link>
+      </div>
     </div>
   );
 }
