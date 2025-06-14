@@ -80,7 +80,6 @@ def find_threshold_and_percentile(international_worth, thresholds):
     percentile = thresholds.index(previous_threshold) if previous_threshold in thresholds else 0
     return previous_threshold, percentile
 
-
 def process_wealth_comparison(currency, net_worth, residence, target_country):
     try:
         res_code = get_country_alpha2_code(residence)
