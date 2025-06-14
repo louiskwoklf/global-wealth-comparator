@@ -64,7 +64,7 @@ export default function GlobalWealthComparator() {
             <DialogClose asChild key={country}>
               <Button
                 variant="ghost"
-                className="w-full justify-start text-left whitespace-nowrap border rounded-md px-3 py-2"
+                className="w-full justify-start text-left whitespace-nowrap border rounded-md px-3 py-2 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                 onClick={() => onSelect(country)}
                 type="button"
               >
@@ -80,7 +80,7 @@ export default function GlobalWealthComparator() {
   const Popup = ({ value, onSelect, label, groups }) => (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full justify-between" type="button">
+        <Button variant="outline" className="w-full justify-between focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0" type="button">
           {value ? value : `Select ${label}`}
           <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
@@ -116,7 +116,7 @@ export default function GlobalWealthComparator() {
           </label>
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" className="w-full justify-between" type="button">
+              <Button variant="outline" className="w-full justify-between focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0" type="button">
                 {netWorth ? `${currency} ${netWorth}` : "Enter Net Worth"}
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
@@ -148,7 +148,7 @@ export default function GlobalWealthComparator() {
                   />
                 </div>
                 <DialogClose asChild>
-                  <Button className="w-full bg-black text-white hover:bg-neutral-900" type="button">
+                  <Button className="w-full bg-black text-white hover:bg-neutral-900 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0" type="button">
                     OK
                   </Button>
                 </DialogClose>
@@ -187,7 +187,7 @@ export default function GlobalWealthComparator() {
         <div>
           <Button
             onClick={handleSubmit}
-            className="w-full bg-black text-white hover:bg-neutral-900"
+            className="w-full bg-black text-white hover:bg-neutral-900 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
             type="button"
           >
             Submit
