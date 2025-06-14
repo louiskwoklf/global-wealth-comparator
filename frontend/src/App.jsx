@@ -16,6 +16,7 @@ export default function GlobalWealthComparator() {
   const [targetCountry, setTargetCountry] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [netWorth, setNetWorth] = useState("");
+  const [currencies, setCurrencies] = useState([]);
 
   const [residenceGroups, setResidenceGroups] = useState({});
   const [targetGroups, setTargetGroups] = useState({});
@@ -29,6 +30,11 @@ export default function GlobalWealthComparator() {
     fetch("http://localhost:5000/api/target-countries")
       .then((res) => res.json())
       .then((data) => setTargetGroups(data))
+      .catch(console.error);
+
+    fetch("https://api.frankfurter.app/currencies")
+      .then((res) => res.json())
+      .then((data) => setCurrencies(Object.keys(data)))
       .catch(console.error);
   }, []);
 
@@ -50,7 +56,6 @@ export default function GlobalWealthComparator() {
     }
   };
 
-  // Render countries in a 5-column grid by continent
   const renderCountryGridBody = (groups, onSelect) => (
     <div className="grid grid-cols-5 gap-6">
       {Object.entries(groups).map(([region, countries]) => (
@@ -76,7 +81,7 @@ export default function GlobalWealthComparator() {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full justify-between" type="button">
-          {value || label}
+          {value ? value : `Select ${label}`}
           <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
       </DialogTrigger>
@@ -84,7 +89,7 @@ export default function GlobalWealthComparator() {
         <DialogTitle>{label}</DialogTitle>
         <DialogDescription>Select a country from the list.</DialogDescription>
         {/* Fixed headers row */}
-        <div className="grid grid-cols-5 gap-6">
+        <div className="grid grid-cols-5 gap-6" style={{ paddingRight: "15px" }}>
           {Object.keys(groups).map((region) => (
             <h3 key={region} className="text-sm font-semibold text-left">
               {region}
@@ -101,13 +106,13 @@ export default function GlobalWealthComparator() {
 
   return (
     <div className="min-h-screen bg-[#f9f7f3] text-neutral-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-sm space-y-6">
         <h1 className="text-2xl font-semibold text-center">Global Wealth Comparator</h1>
 
         {/* Net Worth Input */}
         <div>
           <label htmlFor="net-worth-input" className="block text-sm font-medium mb-1 text-center">
-            Enter Your Net Worth
+            Net Worth
           </label>
           <Dialog>
             <DialogTrigger asChild>
@@ -117,17 +122,17 @@ export default function GlobalWealthComparator() {
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-white rounded-2xl shadow-lg p-6 max-h-[80vh] overflow-y-auto">
-              <DialogTitle>Enter Your Net Worth</DialogTitle>
+              <DialogTitle>Net Worth</DialogTitle>
               <DialogDescription>Select your currency and enter your net worth.</DialogDescription>
-              <div className="pt-8 space-y-4">
+              <div className="pt-0 space-y-2">
                 <div className="flex gap-2 mb-4">
                   <select
                     id="currency-select"
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
-                    className="border rounded px-3 py-2 w-1/3"
+                    className="border rounded px-3 py-2 w-1/3 focus:outline-none focus:ring-0"
                   >
-                    {["USD", "EUR", "GBP", "CNY", "INR", "JPY", "CAD", "AUD"].map((cur) => (
+                    {currencies.map((cur) => (
                       <option key={cur} value={cur}>
                         {cur}
                       </option>
@@ -139,7 +144,7 @@ export default function GlobalWealthComparator() {
                     value={netWorth}
                     onChange={(e) => setNetWorth(e.target.value)}
                     placeholder="Net Worth"
-                    className="w-2/3"
+                    className="w-2/3 focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                   />
                 </div>
                 <DialogClose asChild>
@@ -160,7 +165,7 @@ export default function GlobalWealthComparator() {
           <Popup
             value={residence}
             onSelect={setResidence}
-            label="Select Country"
+            label="Country of Residence"
             groups={residenceGroups}
           />
         </div>
@@ -173,7 +178,7 @@ export default function GlobalWealthComparator() {
           <Popup
             value={targetCountry}
             onSelect={setTargetCountry}
-            label="Select Target Country"
+            label="Target Country"
             groups={targetGroups}
           />
         </div>
@@ -187,6 +192,10 @@ export default function GlobalWealthComparator() {
           >
             Submit
           </Button>
+        </div>
+
+        <div className="text-xs text-center text-gray-500 mt-2">
+          We respect your privacy. Your input is used only to run the comparison and is not viewed or stored.
         </div>
       </div>
     </div>

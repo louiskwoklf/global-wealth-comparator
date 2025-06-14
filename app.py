@@ -51,7 +51,6 @@ def get_country_name_from_alpha2(alpha2_code):
     country = pycountry.countries.get(alpha_2=alpha2_code)
     if country is None:
         raise ValueError(f"Unknown country code: {alpha2_code}")
-    # prefer friendly/common name if available, otherwise use the standard name
     return getattr(country, "common_name", country.name)
 
 def group_countries_by_continent(alpha2_codes):
@@ -155,6 +154,22 @@ def list_residence_countries():
     csv_path = os.path.join(os.path.dirname(__file__), "data", "processed", "combined.csv")
     df = pd.read_csv(csv_path)
     codes = sorted(df["Country Code"].dropna().unique())
+    try:
+        resp = requests.get("https://api.frankfurter.app/currencies", timeout=5)
+        if resp.status_code == 200:
+            supported_currencies = set(resp.json().keys())
+        else:
+            supported_currencies = set()
+    except requests.exceptions.RequestException:
+        supported_currencies = set()
+    filtered_codes = []
+    for code in codes:
+        try:
+            if get_official_currency_for_country(code) in supported_currencies:
+                filtered_codes.append(code)
+        except Exception:
+            continue
+    codes = filtered_codes
     grouped = group_countries_by_continent(codes)
     return jsonify(grouped)
 
