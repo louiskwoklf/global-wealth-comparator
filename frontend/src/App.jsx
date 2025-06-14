@@ -18,6 +18,20 @@ export default function GlobalWealthComparator() {
   const [targetCountry, setTargetCountry] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [netWorth, setNetWorth] = useState("");
+
+  const handleNetWorthChange = (e) => {
+    const rawValue = e.target.value.replace(/,/g, '');
+    if (rawValue === '' || rawValue === '-') {
+      setNetWorth(rawValue);
+      return;
+    }
+    if (rawValue === '0' || /^-?[1-9]\d*$/.test(rawValue)) {
+      const isNegative = rawValue.startsWith('-');
+      const numericPart = isNegative ? rawValue.slice(1) : rawValue;
+      const formattedNumeric = numericPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      setNetWorth((isNegative ? '-' : '') + formattedNumeric);
+    }
+  };
   const [currencies, setCurrencies] = useState([]);
 
   const [residenceGroups, setResidenceGroups] = useState({});
@@ -42,7 +56,8 @@ export default function GlobalWealthComparator() {
   }, []);
 
   const handleSubmit = async () => {
-    const payload = { currency, netWorth, residence, targetCountry };
+    const rawNetWorth = netWorth.replace(/,/g, '');
+    const payload = { currency, netWorth: rawNetWorth, residence, targetCountry };
 
     try {
       const res = await fetch("http://localhost:5000/api/submit", {
@@ -145,9 +160,9 @@ export default function GlobalWealthComparator() {
                       </select>
                       <Input
                         id="net-worth-input"
-                        type="number"
+                        type="text"
                         value={netWorth}
-                        onChange={(e) => setNetWorth(e.target.value)}
+                        onChange={handleNetWorthChange}
                         placeholder="Net Worth"
                         className="w-2/3 focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       />
