@@ -37,6 +37,8 @@ export default function GlobalWealthComparator() {
   const [residenceGroups, setResidenceGroups] = useState({});
   const [targetGroups, setTargetGroups] = useState({});
   const navigate = useNavigate();
+  // Determine whether all fields are filled
+  const isFormValid = netWorth !== '' && netWorth !== '-' && residence !== '' && targetCountry !== '';
 
   useEffect(() => {
     fetch("http://localhost:5000/api/residence-countries")
@@ -207,7 +209,8 @@ export default function GlobalWealthComparator() {
             <div>
               <Button
                 onClick={handleSubmit}
-                className="w-full bg-black text-white border border-transparent hover:bg-gray-500 hover:text-black hover:border-gray-800 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                disabled={!isFormValid}
+                className="w-full bg-black text-white border border-transparent hover:bg-gray-500 hover:text-black hover:border-gray-800 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
               >
                 Submit
