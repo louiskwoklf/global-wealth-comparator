@@ -26,7 +26,7 @@ export default function ResultsPage() {
           <strong>In {result.official_currency}:</strong> {result.converted_net_worth_in_official.toLocaleString()}
         </li>
         <li>
-          <strong>After Inflation:</strong> {result.deflated_net_worth.toLocaleString()}
+          <strong>After Deflation to 2023 EOY:</strong> {result.deflated_net_worth.toLocaleString()}
         </li>
         <li>
           <strong>PPP-Adjusted:</strong> {result.international_net_worth.toLocaleString()}
