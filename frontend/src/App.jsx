@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { Routes, Route, useNavigate } from 'react-router-dom';
+import ComparisonResults from './ComparisonResults';
 import {
   Dialog,
   DialogTrigger,
@@ -20,6 +22,7 @@ export default function GlobalWealthComparator() {
 
   const [residenceGroups, setResidenceGroups] = useState({});
   const [targetGroups, setTargetGroups] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch("http://localhost:5000/api/residence-countries")
@@ -49,7 +52,7 @@ export default function GlobalWealthComparator() {
       });
       const json = await res.json();
       console.log("Server replied:", json);
-      alert("Submission successful!");
+      navigate('/results', { state: json.result });
     } catch (err) {
       console.error("Submission error:", err);
       alert("Submission failed");
@@ -105,99 +108,104 @@ export default function GlobalWealthComparator() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f9f7f3] text-neutral-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-6">
-        <h1 className="text-2xl font-semibold text-center">Global Wealth Comparator</h1>
+    <Routes>
+      <Route path="/" element={
+        <div className="min-h-screen bg-[#f9f7f3] text-neutral-800 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm space-y-6">
+            <h1 className="text-2xl font-semibold text-center">Global Wealth Comparator</h1>
 
-        {/* Net Worth Input */}
-        <div>
-          <label htmlFor="net-worth-input" className="block text-sm font-medium mb-1 text-center">
-            Net Worth
-          </label>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full justify-between focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0" type="button">
-                {netWorth ? `${currency} ${netWorth}` : "Enter Net Worth"}
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-white rounded-2xl shadow-lg p-6 max-h-[80vh] overflow-y-auto">
-              <DialogTitle>Net Worth</DialogTitle>
-              <DialogDescription>Select your currency and enter your net worth.</DialogDescription>
-              <div className="pt-0 space-y-2">
-                <div className="flex gap-2 mb-4">
-                  <select
-                    id="currency-select"
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
-                    className="border rounded px-3 py-2 w-1/3 focus:outline-none focus:ring-0"
-                  >
-                    {currencies.map((cur) => (
-                      <option key={cur} value={cur}>
-                        {cur}
-                      </option>
-                    ))}
-                  </select>
-                  <Input
-                    id="net-worth-input"
-                    type="number"
-                    value={netWorth}
-                    onChange={(e) => setNetWorth(e.target.value)}
-                    placeholder="Net Worth"
-                    className="w-2/3 focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                  />
-                </div>
-                <DialogClose asChild>
-                  <Button className="w-full bg-black text-white hover:bg-neutral-900 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0" type="button">
-                    OK
+            {/* Net Worth Input */}
+            <div>
+              <label htmlFor="net-worth-input" className="block text-sm font-medium mb-1 text-center">
+                Net Worth
+              </label>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0" type="button">
+                    {netWorth ? `${currency} ${netWorth}` : "Enter Net Worth"}
+                    <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
-                </DialogClose>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+                </DialogTrigger>
+                <DialogContent className="bg-white rounded-2xl shadow-lg p-6 max-h-[80vh] overflow-y-auto">
+                  <DialogTitle>Net Worth</DialogTitle>
+                  <DialogDescription>Select your currency and enter your net worth.</DialogDescription>
+                  <div className="pt-0 space-y-2">
+                    <div className="flex gap-2 mb-4">
+                      <select
+                        id="currency-select"
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value)}
+                        className="border rounded px-3 py-2 w-1/3 focus:outline-none focus:ring-0"
+                      >
+                        {currencies.map((cur) => (
+                          <option key={cur} value={cur}>
+                            {cur}
+                          </option>
+                        ))}
+                      </select>
+                      <Input
+                        id="net-worth-input"
+                        type="number"
+                        value={netWorth}
+                        onChange={(e) => setNetWorth(e.target.value)}
+                        placeholder="Net Worth"
+                        className="w-2/3 focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      />
+                    </div>
+                    <DialogClose asChild>
+                      <Button className="w-full bg-black text-white hover:bg-neutral-900 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0" type="button">
+                        OK
+                      </Button>
+                    </DialogClose>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
 
-        {/* Country of Residence */}
-        <div>
-          <label className="block text-sm font-medium mb-1 text-center">
-            Country of Residence
-          </label>
-          <Popup
-            value={residence}
-            onSelect={setResidence}
-            label="Country of Residence"
-            groups={residenceGroups}
-          />
-        </div>
+            {/* Country of Residence */}
+            <div>
+              <label className="block text-sm font-medium mb-1 text-center">
+                Country of Residence
+              </label>
+              <Popup
+                value={residence}
+                onSelect={setResidence}
+                label="Country of Residence"
+                groups={residenceGroups}
+              />
+            </div>
 
-        {/* Target Country for Comparison */}
-        <div>
-          <label className="block text-sm font-medium mb-1 text-center">
-            Target Country for Comparison
-          </label>
-          <Popup
-            value={targetCountry}
-            onSelect={setTargetCountry}
-            label="Target Country"
-            groups={targetGroups}
-          />
-        </div>
+            {/* Target Country for Comparison */}
+            <div>
+              <label className="block text-sm font-medium mb-1 text-center">
+                Target Country for Comparison
+              </label>
+              <Popup
+                value={targetCountry}
+                onSelect={setTargetCountry}
+                label="Target Country"
+                groups={targetGroups}
+              />
+            </div>
 
-        {/* Submit Button */}
-        <div>
-          <Button
-            onClick={handleSubmit}
-            className="w-full bg-black text-white hover:bg-neutral-900 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
-            type="button"
-          >
-            Submit
-          </Button>
-        </div>
+            {/* Submit Button */}
+            <div>
+              <Button
+                onClick={handleSubmit}
+                className="w-full bg-black text-white hover:bg-neutral-900 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                type="button"
+              >
+                Submit
+              </Button>
+            </div>
 
-        <div className="text-xs text-center text-gray-500 mt-2">
-          We respect your privacy. Your input is used only to run the comparison and is not viewed or stored.
+            <div className="text-xs text-center text-gray-500 mt-2">
+              We respect your privacy. Your input is used only to run the comparison and is not viewed or stored.
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      } />
+      <Route path="/results" element={<ComparisonResults />} />
+    </Routes>
   );
 }
