@@ -6,6 +6,17 @@ from babel.numbers import get_territory_currencies
 import pandas as pd
 import os
 import requests
+import pycountry_convert as pc
+
+CONTINENT_NAMES = {
+    "AF": "Africa",
+    "AS": "Asia",
+    "OC": "Oceania",
+    "EU": "Europe",
+    "NA": "Americas",
+    "SA": "Americas",
+    "AN": "Antarctica",
+}
 
 app = Flask(__name__)
 CORS(app)
@@ -27,10 +38,33 @@ def get_latest_exchange_rate(base_currency, target_currency):
     raise ValueError(f"Could not retrieve exchange rate for {base_currency} to {target_currency} in the last 7 days.")
 
 def get_country_alpha2_code(country_name):
-    country = pycountry.countries.get(name=country_name) or pycountry.countries.get(official_name=country_name)
+    country = (
+        pycountry.countries.get(name=country_name)
+        or pycountry.countries.get(common_name=country_name)
+        or pycountry.countries.get(official_name=country_name)
+    )
     if country is None:
         raise ValueError(f"Unknown country: {country_name}")
     return country.alpha_2
+
+def get_country_name_from_alpha2(alpha2_code):
+    country = pycountry.countries.get(alpha_2=alpha2_code)
+    if country is None:
+        raise ValueError(f"Unknown country code: {alpha2_code}")
+    # prefer friendly/common name if available, otherwise use the standard name
+    return getattr(country, "common_name", country.name)
+
+def group_countries_by_continent(alpha2_codes):
+    buckets = {name: [] for name in set(CONTINENT_NAMES.values())}
+    for code in alpha2_codes:
+        try:
+            continent_code = pc.country_alpha2_to_continent_code(code)
+            continent = CONTINENT_NAMES.get(continent_code)
+            if continent:
+                buckets[continent].append(get_country_name_from_alpha2(code))
+        except Exception:
+            continue
+    return {cont: sorted(names) for cont, names in buckets.items() if names}
 
 def get_official_currency_for_country(country_code):
     currencies = get_territory_currencies(country_code)
@@ -116,8 +150,21 @@ def submit_wealth_comparison():
     result = process_wealth_comparison(currency, net_worth, residence, target_country)
     return jsonify(status="ok", result=result)
 
+@app.route("/api/residence-countries", methods=["GET"])
+def list_residence_countries():
+    csv_path = os.path.join(os.path.dirname(__file__), "data", "processed", "combined.csv")
+    df = pd.read_csv(csv_path)
+    codes = sorted(df["Country Code"].dropna().unique())
+    grouped = group_countries_by_continent(codes)
+    return jsonify(grouped)
+
+@app.route("/api/target-countries", methods=["GET"])
+def list_target_countries():
+    csv_path = os.path.join(os.path.dirname(__file__), "data", "processed", "wealth_ladders.csv")
+    df = pd.read_csv(csv_path)
+    codes = sorted(df["Country Code"].dropna().unique())
+    grouped = group_countries_by_continent(codes)
+    return jsonify(grouped)
+
 if __name__ == "__main__":
-    # Example of how to run without a Flask server for testing:
-    # test_result = process_wealth_comparison("USD", "100000", "United Kingdom", "United States")
-    # print(test_result)
     app.run(debug=True)

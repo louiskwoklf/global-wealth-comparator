@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -11,65 +11,29 @@ import { Input } from "./components/ui/input";
 import { Button } from "./components/ui/button";
 import { ChevronDown } from "lucide-react";
 
-// Define countries by region
-const regions = {
-  Americas: [
-    "United States",
-    "Canada",
-    "Mexico",
-    "Brazil",
-    "Argentina",
-    "Chile",
-    "Colombia",
-  ],
-  Africa: [
-    "Nigeria",
-    "South Africa",
-    "Egypt",
-    "Kenya",
-    "Morocco",
-    "Ghana",
-    "Ethiopia",
-  ],
-  Europe: [
-    "United Kingdom",
-    "Germany",
-    "France",
-    "Italy",
-    "Spain",
-    "Netherlands",
-    "Sweden",
-  ],
-  Asia: [
-    "China",
-    "India",
-    "Japan",
-    "South Korea",
-    "Indonesia",
-    "Saudi Arabia",
-    "Turkey",
-  ],
-  Oceania: [
-    "Australia",
-    "New Zealand",
-    "Fiji",
-    "Papua New Guinea",
-    "Samoa",
-    "Tonga",
-  ],
-};
-
 export default function GlobalWealthComparator() {
   const [residence, setResidence] = useState("");
   const [targetCountry, setTargetCountry] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [netWorth, setNetWorth] = useState("");
 
-  // Submit handler: send user inputs to backend
+  const [residenceGroups, setResidenceGroups] = useState({});
+  const [targetGroups, setTargetGroups] = useState({});
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/residence-countries")
+      .then((res) => res.json())
+      .then((data) => setResidenceGroups(data))
+      .catch(console.error);
+
+    fetch("http://localhost:5000/api/target-countries")
+      .then((res) => res.json())
+      .then((data) => setTargetGroups(data))
+      .catch(console.error);
+  }, []);
+
   const handleSubmit = async () => {
     const payload = { currency, netWorth, residence, targetCountry };
-
-    console.log("Submitting payload:", payload);
 
     try {
       const res = await fetch("http://localhost:5000/api/submit", {
@@ -86,10 +50,10 @@ export default function GlobalWealthComparator() {
     }
   };
 
-  // Render grid without headers
-  const renderCountryGridBody = (onSelect) => (
+  // Render countries in a 5-column grid by continent
+  const renderCountryGridBody = (groups, onSelect) => (
     <div className="grid grid-cols-5 gap-6">
-      {Object.entries(regions).map(([region, countries]) => (
+      {Object.entries(groups).map(([region, countries]) => (
         <div key={region} className="space-y-2">
           {countries.map((country) => (
             <DialogClose asChild key={country}>
@@ -108,8 +72,7 @@ export default function GlobalWealthComparator() {
     </div>
   );
 
-  // Popup component
-  const Popup = ({ value, onSelect, label }) => (
+  const Popup = ({ value, onSelect, label, groups }) => (
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full justify-between" type="button">
@@ -117,12 +80,12 @@ export default function GlobalWealthComparator() {
           <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="min-w-[1100px] max-w-none bg-white rounded-2xl shadow-lg p-6 h-[40vh] flex flex-col">
+      <DialogContent className="min-w-[1400px] max-w-none bg-white rounded-2xl shadow-lg p-6 h-[60vh] flex flex-col">
         <DialogTitle>{label}</DialogTitle>
         <DialogDescription>Select a country from the list.</DialogDescription>
         {/* Fixed headers row */}
         <div className="grid grid-cols-5 gap-6">
-          {Object.keys(regions).map((region) => (
+          {Object.keys(groups).map((region) => (
             <h3 key={region} className="text-sm font-semibold text-left">
               {region}
             </h3>
@@ -130,7 +93,7 @@ export default function GlobalWealthComparator() {
         </div>
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto pt-4">
-          {renderCountryGridBody(onSelect)}
+          {renderCountryGridBody(groups, onSelect)}
         </div>
       </DialogContent>
     </Dialog>
@@ -141,7 +104,7 @@ export default function GlobalWealthComparator() {
       <div className="w-full max-w-md space-y-6">
         <h1 className="text-2xl font-semibold text-center">Global Wealth Comparator</h1>
 
-        {/* Net Worth */}
+        {/* Net Worth Input */}
         <div>
           <label htmlFor="net-worth-input" className="block text-sm font-medium mb-1 text-center">
             Enter Your Net Worth
@@ -194,7 +157,12 @@ export default function GlobalWealthComparator() {
           <label className="block text-sm font-medium mb-1 text-center">
             Country of Residence
           </label>
-          <Popup value={residence} onSelect={setResidence} label="Select Country" />
+          <Popup
+            value={residence}
+            onSelect={setResidence}
+            label="Select Country"
+            groups={residenceGroups}
+          />
         </div>
 
         {/* Target Country for Comparison */}
@@ -202,7 +170,12 @@ export default function GlobalWealthComparator() {
           <label className="block text-sm font-medium mb-1 text-center">
             Target Country for Comparison
           </label>
-          <Popup value={targetCountry} onSelect={setTargetCountry} label="Select Target Country" />
+          <Popup
+            value={targetCountry}
+            onSelect={setTargetCountry}
+            label="Select Target Country"
+            groups={targetGroups}
+          />
         </div>
 
         {/* Submit Button */}
