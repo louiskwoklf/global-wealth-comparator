@@ -24,4 +24,6 @@ os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
 # Save the mapping to JSON
 with open(output_path, "w", encoding="utf-8") as f:
+    f.write("const nameToNumeric = ")
     json.dump(name_to_numeric, f, indent=2, ensure_ascii=False)
+    f.write("\nexport default nameToNumeric;\n")

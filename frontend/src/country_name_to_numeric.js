@@ -1,4 +1,4 @@
-export default {
+const nameToNumeric = {
   "Aruba": "533",
   "Afghanistan": "004",
   "Islamic Republic of Afghanistan": "004",
@@ -425,3 +425,4 @@ export default {
   "Zimbabwe": "716",
   "Republic of Zimbabwe": "716"
 }
+export default nameToNumeric;
