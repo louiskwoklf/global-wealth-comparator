@@ -137,6 +137,7 @@ def process_wealth_comparison(currency, net_worth, residence, target_country):
         return {"error": str(e)}
     return {
         "residence_code": res_code,
+        "residence_country": residence,
         "official_currency": official_currency,
         "input_currency": currency.upper(),
         "original_net_worth": float(net_worth),

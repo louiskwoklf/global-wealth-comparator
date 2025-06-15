@@ -21,7 +21,7 @@ export default function ResultsPage() {
       <div className="w-full max-w-sm space-y-6 text-center">
         <h1 className="text-2xl font-semibold text-center">Wealth Comparison Results</h1>
         <p className="text-lg">
-          {`With ${result.input_currency} ${result.original_net_worth.toLocaleString()}, you're in the top ${topPercent}% in ${result.target_country}.`}
+          {`With ${result.input_currency} ${result.original_net_worth.toLocaleString()} in ${result.residence_country}, you could enjoy a lifestyle on par with the top ${topPercent}% in ${result.target_country}.`}
         </p>
         <Link to="/" className="mt-4 inline-block text-blue-600 hover:underline cursor-pointer">
           ← Compare again
