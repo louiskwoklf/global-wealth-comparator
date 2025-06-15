@@ -48,7 +48,6 @@ def serve_react(path):
 
 @lru_cache(maxsize=128)
 def get_latest_exchange_rate(base_currency, target_currency):
-    """Cached function to get the latest exchange rate."""
     for i in range(7):
         check_date = datetime.now(timezone.utc).date() - timedelta(days=i)
         date_str = check_date.strftime("%Y-%m-%d")
@@ -187,7 +186,6 @@ def submit_wealth_comparison():
 
 @lru_cache(maxsize=1)
 def get_frankfurter_currencies():
-    """Cached function to get currencies from the external API."""
     try:
         resp = requests.get("https://api.frankfurter.app/currencies", timeout=5)
         if resp.status_code == 200:
@@ -197,7 +195,6 @@ def get_frankfurter_currencies():
 
 @app.route("/api/residence-countries", methods=["GET"])
 def list_residence_countries():
-    """Lists countries that have complete data and a supported currency."""
     codes = COMBINED_DF.index.dropna().unique().tolist()
     supported_currencies = get_frankfurter_currencies()
     
