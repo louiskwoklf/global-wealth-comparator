@@ -16,8 +16,8 @@ for country in pycountry.countries:
     if hasattr(country, "official_name"):
         name_to_numeric[country.official_name] = numeric
 
-# Path to React public folder
-output_path = os.path.join("frontend", "public", "country_name_to_numeric.json")
+# Path to React src folder
+output_path = os.path.join("frontend", "src", "country_name_to_numeric.js")
 
 # Ensure directory exists
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
