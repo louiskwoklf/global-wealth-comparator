@@ -12,8 +12,8 @@ export default function ResultsPage() {
   useEffect(() => {
     if (!results.length || !d3.select('#world-map').node()) return;
 
-    const width = 600;
-    const height = 350;
+    const width = 960;
+    const height = 540;
 
     const svg = d3.select('#world-map')
       .attr('width', width)
@@ -32,7 +32,7 @@ export default function ResultsPage() {
       .style('pointer-events', 'none');
 
     const projection = d3.geoNaturalEarth1()
-      .scale(130)
+      .scale(180)
       .translate([width / 2, height / 2]);
 
     const path = d3.geoPath().projection(projection);
@@ -53,7 +53,14 @@ export default function ResultsPage() {
           .attr('d', path)
           .attr('fill', d => {
               const id = String(d.id).padStart(3, '0');
-              return resultMap[id] ? '#CC7C5E' : 'transparent';
+              const r = resultMap[id];
+              if (!r) return 'transparent';
+
+              const percentile = r.wealth_percentile;
+              if (percentile < 50) return '#e66c6c'; // medium soft red
+              if (percentile >= 99) return '#93c47d'; // medium soft green
+              if (percentile >= 90) return '#ffe599'; // medium soft yellow
+              return '#f6b26b'; // medium soft orange
           })
           .attr('stroke', '#555')
           .attr('stroke-width', 0.7)
@@ -64,7 +71,7 @@ export default function ResultsPage() {
                 const topPercent = 100 - r.wealth_percentile;
                 tooltip
                     .style('visibility', 'visible')
-                    .html(`<strong>${r.target_country}</strong><br/>Top ${topPercent.toFixed(2)}%`)
+                    .html(`<strong>${r.target_country}</strong><br/>Top ${Math.round(topPercent)}%`)
                     .style('left', (event.pageX + 10) + 'px')
                     .style('top', (event.pageY + 10) + 'px');
                 d3.select(this).attr('stroke', '#000').attr('stroke-width', 1.5);
