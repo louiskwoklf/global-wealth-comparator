@@ -220,6 +220,9 @@ export default function GlobalWealthComparator() {
             <div className="text-xs text-center text-gray-500 mt-2">
               We respect your privacy. Your input is used only to run the comparison and is not viewed or stored.
             </div>
+            <div className="text-xs text-center text-gray-500">
+              Data source: World Inequality Database.
+            </div>
           </div>
         </div>
       } />
