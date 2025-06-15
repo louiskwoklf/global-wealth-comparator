@@ -1,6 +1,6 @@
 Flask>=2.0
 Flask-Cors
-pycountry
+pycountry==24.6.1
 Babel
 pandas
 requests
