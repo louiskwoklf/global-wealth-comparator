@@ -69,14 +69,21 @@ def get_country_alpha2_code(country_name):
     try:
         return pycountry.countries.lookup(country_name).alpha_2
     except LookupError:
+        for country in pycountry.countries:
+            if (
+                country.name == country_name
+                or getattr(country, "common_name", None) == country_name
+                or getattr(country, "official_name", None) == country_name
+            ):
+                return country.alpha_2
         raise ValueError(f"Unknown country: {country_name}")
 
 @lru_cache(maxsize=None)
 def get_country_name_from_alpha2(alpha2_code):
-    try:
-        return pycountry.countries.get(alpha_2=alpha2_code).name
-    except AttributeError:
+    country = pycountry.countries.get(alpha_2=alpha2_code)
+    if not country:
         raise ValueError(f"Unknown country code: {alpha2_code}")
+    return getattr(country, "common_name", country.name)
 
 def group_countries_by_continent(alpha2_codes):
     buckets = {name: [] for name in set(CONTINENT_NAMES.values())}
