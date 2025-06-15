@@ -41,12 +41,12 @@ export default function GlobalWealthComparator() {
   const isFormValid = netWorth !== '' && netWorth !== '-' && residence !== '' && targetCountry !== '';
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/residence-countries")
+    fetch("/api/residence-countries")
       .then((res) => res.json())
       .then((data) => setResidenceGroups(data))
       .catch(console.error);
 
-    fetch("http://localhost:5000/api/target-countries")
+    fetch("/api/target-countries")
       .then((res) => res.json())
       .then((data) => setTargetGroups(data))
       .catch(console.error);
@@ -62,7 +62,7 @@ export default function GlobalWealthComparator() {
     const payload = { currency, netWorth: rawNetWorth, residence, targetCountry };
 
     try {
-      const res = await fetch("http://localhost:5000/api/submit", {
+      const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
