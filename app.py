@@ -7,6 +7,7 @@ import pandas as pd
 import os
 import requests
 import pycountry_convert as pc
+from functools import lru_cache
 
 CONTINENT_NAMES = {
     "AF": "Africa",
@@ -18,8 +19,23 @@ CONTINENT_NAMES = {
     "AN": "Antarctica",
 }
 
+WEALTH_LADDERS_DF = None
+COMBINED_DF = None
+
+def load_data():
+    global WEALTH_LADDERS_DF, COMBINED_DF
+    ladder_path = os.path.join(os.path.dirname(__file__), "data", "processed", "wealth_ladders.csv")
+    WEALTH_LADDERS_DF = pd.read_csv(ladder_path)
+    WEALTH_LADDERS_DF.set_index("Country Code", inplace=True)
+    csv_path = os.path.join(os.path.dirname(__file__), "data", "processed", "combined.csv")
+    COMBINED_DF = pd.read_csv(csv_path)
+    COMBINED_DF.set_index("Country Code", inplace=True)
+    print("Data loaded successfully.")
+
 app = Flask(__name__, static_folder='frontend/dist', static_url_path='')
 CORS(app)
+
+load_data()
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -30,7 +46,9 @@ def serve_react(path):
     else:
         return send_from_directory(build_dir, 'index.html')
 
+@lru_cache(maxsize=128)
 def get_latest_exchange_rate(base_currency, target_currency):
+    """Cached function to get the latest exchange rate."""
     for i in range(7):
         check_date = datetime.now(timezone.utc).date() - timedelta(days=i)
         date_str = check_date.strftime("%Y-%m-%d")
@@ -46,21 +64,19 @@ def get_latest_exchange_rate(base_currency, target_currency):
             continue    
     raise ValueError(f"Could not retrieve exchange rate for {base_currency} to {target_currency} in the last 7 days.")
 
+@lru_cache(maxsize=None)
 def get_country_alpha2_code(country_name):
-    country = (
-        pycountry.countries.get(name=country_name)
-        or pycountry.countries.get(common_name=country_name)
-        or pycountry.countries.get(official_name=country_name)
-    )
-    if country is None:
+    try:
+        return pycountry.countries.lookup(country_name).alpha_2
+    except LookupError:
         raise ValueError(f"Unknown country: {country_name}")
-    return country.alpha_2
 
+@lru_cache(maxsize=None)
 def get_country_name_from_alpha2(alpha2_code):
-    country = pycountry.countries.get(alpha_2=alpha2_code)
-    if country is None:
+    try:
+        return pycountry.countries.get(alpha_2=alpha2_code).name
+    except AttributeError:
         raise ValueError(f"Unknown country code: {alpha2_code}")
-    return getattr(country, "common_name", country.name)
 
 def group_countries_by_continent(alpha2_codes):
     buckets = {name: [] for name in set(CONTINENT_NAMES.values())}
@@ -74,6 +90,7 @@ def group_countries_by_continent(alpha2_codes):
             continue
     return {cont: sorted(names) for cont, names in buckets.items() if names}
 
+@lru_cache(maxsize=None)
 def get_official_currency_for_country(country_code):
     currencies = get_territory_currencies(country_code)
     if not currencies:
@@ -92,12 +109,11 @@ def convert_amount_to_official_currency(input_currency, amount, official_currenc
     return rate * amount_value
 
 def get_ppp_cpi_values(residence_code):
-    csv_path = os.path.join(os.path.dirname(__file__), "data", "processed", "combined.csv")
-    df = pd.read_csv(csv_path)
-    row = df.loc[df["Country Code"] == residence_code]
-    if row.empty:
+    try:
+        row = COMBINED_DF.loc[residence_code]
+        return float(row["PPP"]), float(row["CPI"])
+    except KeyError:
         raise ValueError(f"No PPP/CPI data for country code: {residence_code}")
-    return float(row["PPP"].iloc[0]), float(row["CPI"].iloc[0])
 
 def adjust_for_inflation(amount, cpi):
     return amount / (1 + cpi / 100)
@@ -106,48 +122,23 @@ def adjust_for_ppp(amount, ppp):
     return amount / ppp
 
 def get_wealth_ladder_thresholds(target_code):
-    ladder_path = os.path.join(os.path.dirname(__file__), "data", "processed", "wealth_ladders.csv")
-    df = pd.read_csv(ladder_path)
-    row = df.loc[df["Country Code"] == target_code]
-    if row.empty:
+    try:
+        row = WEALTH_LADDERS_DF.loc[target_code]
+        return [float(x) for x in row.tolist()]
+    except KeyError:
         raise ValueError(f"No wealth ladder data for country code: {target_code}")
-    return [float(x) for x in row.iloc[0, 1:].tolist()]
 
 def find_threshold_and_percentile(international_worth, thresholds):
     previous_threshold = 0
-    for threshold in thresholds:
+    percentile = 0
+    for i, threshold in enumerate(thresholds):
         if international_worth < threshold:
+            percentile = i
             break
         previous_threshold = threshold
-    percentile = thresholds.index(previous_threshold) if previous_threshold in thresholds else 0
+    else:
+        percentile = 99
     return previous_threshold, percentile
-
-def process_wealth_comparison(currency, net_worth, residence, target_country):
-    try:
-        res_code = get_country_alpha2_code(residence)
-        official_currency = get_official_currency_for_country(res_code)
-        converted_value = convert_amount_to_official_currency(currency, net_worth, official_currency)
-        ppp, cpi = get_ppp_cpi_values(res_code)
-        deflated_value = adjust_for_inflation(converted_value, cpi)
-        international_value = adjust_for_ppp(deflated_value, ppp)
-        target_code = get_country_alpha2_code(target_country)
-        thresholds = get_wealth_ladder_thresholds(target_code)
-        wealth_threshold, wealth_percentile = find_threshold_and_percentile(international_value, thresholds)
-    except Exception as e:
-        return {"error": str(e)}
-    return {
-        "residence_code": res_code,
-        "residence_country": residence,
-        "official_currency": official_currency,
-        "input_currency": currency.upper(),
-        "original_net_worth": float(net_worth),
-        "converted_net_worth_in_official": converted_value,
-        "deflated_net_worth": deflated_value,
-        "international_net_worth": international_value,
-        "wealth_threshold": wealth_threshold,
-        "wealth_percentile": wealth_percentile,
-        "target_country": target_country
-    }
 
 @app.route("/api/submit", methods=["POST"])
 def submit_wealth_comparison():
@@ -155,23 +146,57 @@ def submit_wealth_comparison():
     currency = data.get("currency")
     net_worth = data.get("netWorth")
     residence = data.get("residence")
-    target_country = data.get("targetCountry")
-    result = process_wealth_comparison(currency, net_worth, residence, target_country)
-    return jsonify(status="ok", result=result)
 
-@app.route("/api/residence-countries", methods=["GET"])
-def list_residence_countries():
-    csv_path = os.path.join(os.path.dirname(__file__), "data", "processed", "combined.csv")
-    df = pd.read_csv(csv_path)
-    codes = sorted(df["Country Code"].dropna().unique())
+    try:
+        res_code = get_country_alpha2_code(residence)
+        official_currency = get_official_currency_for_country(res_code)
+        converted_value = convert_amount_to_official_currency(currency, net_worth, official_currency)
+        ppp, cpi = get_ppp_cpi_values(res_code)
+        deflated_value = adjust_for_inflation(converted_value, cpi)
+        international_value = adjust_for_ppp(deflated_value, ppp)
+
+        target_codes = WEALTH_LADDERS_DF.index.dropna().unique().tolist()
+        results_list = []
+        
+        for code in target_codes:
+            try:
+                target_country_name = get_country_name_from_alpha2(code)
+                thresholds = get_wealth_ladder_thresholds(code)
+                _, wealth_percentile = find_threshold_and_percentile(international_value, thresholds)
+                
+                results_list.append({
+                    "wealth_percentile": wealth_percentile,
+                    "target_country": target_country_name
+                })
+            except ValueError:
+                continue
+
+        return jsonify(status="ok", results=results_list)
+
+    except (ValueError, TypeError) as e:
+        return jsonify(status="error", message=str(e)), 400
+    except Exception as e:
+        return jsonify(status="error", message="An unexpected error occurred."), 500
+
+@lru_cache(maxsize=1)
+def get_frankfurter_currencies():
+    """Cached function to get currencies from the external API."""
     try:
         resp = requests.get("https://api.frankfurter.app/currencies", timeout=5)
         if resp.status_code == 200:
-            supported_currencies = set(resp.json().keys())
-        else:
-            supported_currencies = set()
+            return set(resp.json().keys())
     except requests.exceptions.RequestException:
-        supported_currencies = set()
+        return set()
+
+@app.route("/api/residence-countries", methods=["GET"])
+def list_residence_countries():
+    """Lists countries that have complete data and a supported currency."""
+    codes = COMBINED_DF.index.dropna().unique().tolist()
+    supported_currencies = get_frankfurter_currencies()
+    
+    if not supported_currencies:
+        return jsonify({"error": "Could not fetch currency list"}), 503
+
     filtered_codes = []
     for code in codes:
         try:
@@ -179,15 +204,13 @@ def list_residence_countries():
                 filtered_codes.append(code)
         except Exception:
             continue
-    codes = filtered_codes
-    grouped = group_countries_by_continent(codes)
+            
+    grouped = group_countries_by_continent(filtered_codes)
     return jsonify(grouped)
 
 @app.route("/api/target-countries", methods=["GET"])
 def list_target_countries():
-    csv_path = os.path.join(os.path.dirname(__file__), "data", "processed", "wealth_ladders.csv")
-    df = pd.read_csv(csv_path)
-    codes = sorted(df["Country Code"].dropna().unique())
+    codes = WEALTH_LADDERS_DF.index.dropna().unique().tolist()
     grouped = group_countries_by_continent(codes)
     return jsonify(grouped)
 

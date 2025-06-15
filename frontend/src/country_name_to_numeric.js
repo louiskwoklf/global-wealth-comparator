@@ -1,4 +1,4 @@
-{
+export default {
   "Aruba": "533",
   "Afghanistan": "004",
   "Islamic Republic of Afghanistan": "004",

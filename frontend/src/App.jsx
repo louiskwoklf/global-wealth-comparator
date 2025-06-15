@@ -15,9 +15,9 @@ import { ChevronDown } from "lucide-react";
 
 export default function GlobalWealthComparator() {
   const [residence, setResidence] = useState("");
-  const [targetCountry, setTargetCountry] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [netWorth, setNetWorth] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleNetWorthChange = (e) => {
     const rawValue = e.target.value.replace(/,/g, '');
@@ -25,20 +25,19 @@ export default function GlobalWealthComparator() {
       setNetWorth(rawValue);
       return;
     }
-    if (rawValue === '0' || /^-?[1-9]\d*$/.test(rawValue)) {
-      const isNegative = rawValue.startsWith('-');
-      const numericPart = isNegative ? rawValue.slice(1) : rawValue;
-      const formattedNumeric = numericPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      setNetWorth((isNegative ? '-' : '') + formattedNumeric);
+    if (/^-?\d*$/.test(rawValue)) {
+        const numericValue = Number(rawValue);
+        if (!isNaN(numericValue)) {
+            setNetWorth(numericValue.toLocaleString('en-US'));
+        }
     }
   };
-  const [currencies, setCurrencies] = useState([]);
 
+  const [currencies, setCurrencies] = useState([]);
   const [residenceGroups, setResidenceGroups] = useState({});
-  const [targetGroups, setTargetGroups] = useState({});
   const navigate = useNavigate();
-  // Determine whether all fields are filled
-  const isFormValid = netWorth !== '' && netWorth !== '-' && residence !== '' && targetCountry !== '';
+  
+  const isFormValid = netWorth !== '' && netWorth !== '-' && residence !== '';
 
   useEffect(() => {
     fetch("/api/residence-countries")
@@ -46,20 +45,18 @@ export default function GlobalWealthComparator() {
       .then((data) => setResidenceGroups(data))
       .catch(console.error);
 
-    fetch("/api/target-countries")
-      .then((res) => res.json())
-      .then((data) => setTargetGroups(data))
-      .catch(console.error);
-
     fetch("https://api.frankfurter.app/currencies")
       .then((res) => res.json())
-      .then((data) => setCurrencies(Object.keys(data)))
+      .then((data) => setCurrencies(Object.keys(data).sort()))
       .catch(console.error);
   }, []);
 
   const handleSubmit = async () => {
+    if (!isFormValid) return;
+    setIsLoading(true);
+
     const rawNetWorth = netWorth.replace(/,/g, '');
-    const payload = { currency, netWorth: rawNetWorth, residence, targetCountry };
+    const payload = { currency, netWorth: rawNetWorth, residence };
 
     try {
       const res = await fetch("/api/submit", {
@@ -67,12 +64,19 @@ export default function GlobalWealthComparator() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Submission failed");
+      }
+
       const json = await res.json();
-      console.log("Server replied:", json);
-      navigate('/results', { state: json.result });
+      navigate('/results', { state: { results: json.results } });
     } catch (err) {
       console.error("Submission error:", err);
-      alert("Submission failed");
+      alert(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -195,28 +199,15 @@ export default function GlobalWealthComparator() {
               />
             </div>
 
-            {/* Target Country for Comparison */}
-            <div>
-              <label className="block text-sm font-medium mb-1 text-center">
-                Target Country for Comparison
-              </label>
-              <Popup
-                value={targetCountry}
-                onSelect={setTargetCountry}
-                label="Target Country"
-                groups={targetGroups}
-              />
-            </div>
-
             {/* Submit Button */}
             <div>
               <Button
                 onClick={handleSubmit}
-                disabled={!isFormValid}
+                disabled={!isFormValid || isLoading} // Disable when loading
                 className="w-full bg-black text-white border border-transparent hover:bg-gray-500 hover:text-black hover:border-gray-800 transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
               >
-                Submit
+                {isLoading ? "Submitting..." : "Submit"}
               </Button>
             </div>
 
