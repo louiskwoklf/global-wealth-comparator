@@ -53,7 +53,7 @@ export default function ResultsPage() {
           .attr('d', path)
           .attr('fill', d => {
               const id = String(d.id).padStart(3, '0');
-              return resultMap[id] ? '#ff6600' : 'transparent';
+              return resultMap[id] ? '#CC7C5E' : 'transparent';
           })
           .attr('stroke', '#555')
           .attr('stroke-width', 0.7)
