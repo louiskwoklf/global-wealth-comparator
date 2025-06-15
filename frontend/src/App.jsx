@@ -143,7 +143,10 @@ export default function GlobalWealthComparator() {
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-white rounded-2xl shadow-lg p-6 max-h-[80vh] overflow-y-auto">
+                <DialogContent
+                  onOpenAutoFocus={(event) => event.preventDefault()}
+                  className="bg-white rounded-2xl shadow-lg p-6 max-h-[80vh] overflow-y-auto"
+                >
                   <DialogTitle>Net Worth</DialogTitle>
                   <DialogDescription>Select your currency and enter your net worth.</DialogDescription>
                   <div className="pt-0 space-y-2">
