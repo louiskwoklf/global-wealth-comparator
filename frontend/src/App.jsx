@@ -81,9 +81,10 @@ export default function GlobalWealthComparator() {
   };
 
   const renderCountryGridBody = (groups, onSelect) => (
-    <div className="grid grid-cols-5 gap-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
       {Object.entries(groups).map(([region, countries]) => (
         <div key={region} className="space-y-2">
+          <h3 className="text-sm font-semibold">{region}</h3>
           {countries.map((country) => (
             <DialogClose asChild key={country}>
               <Button
@@ -109,17 +110,10 @@ export default function GlobalWealthComparator() {
           <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="min-w-[1400px] max-w-none bg-white rounded-2xl shadow-lg p-6 h-[60vh] flex flex-col">
+      <DialogContent className="w-full max-w-[90vw] sm:max-w-[600px] md:max-w-[900px] lg:max-w-[1200px] bg-white rounded-2xl shadow-lg p-6 h-[60vh] flex flex-col">
         <DialogTitle>{label}</DialogTitle>
-        <DialogDescription>Select a country from the list.</DialogDescription>
-        {/* Fixed headers row */}
-        <div className="grid grid-cols-5 gap-6" style={{ paddingRight: "15px" }}>
-          {Object.keys(groups).map((region) => (
-            <h3 key={region} className="text-sm font-semibold text-left">
-              {region}
-            </h3>
-          ))}
-        </div>
+        <DialogDescription>Choose a country (continents are labeled inside each column).</DialogDescription>
+
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto pt-4">
           {renderCountryGridBody(groups, onSelect)}

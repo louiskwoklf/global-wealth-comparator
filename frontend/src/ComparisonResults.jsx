@@ -16,8 +16,10 @@ export default function ResultsPage() {
     const height = 540;
 
     const svg = d3.select('#world-map')
-      .attr('width', width)
-      .attr('height', height);
+      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet')
+      .classed('w-full', true)
+      .classed('h-auto', true);
 
     svg.selectAll('*').remove();
 
@@ -104,7 +106,7 @@ export default function ResultsPage() {
           ← Compare again
         </Link>
       </div>
-      <svg id="world-map" className="mt-8" />
+      <svg id="world-map" className="mt-8 w-full h-auto" />
     </div>
   );
 }
