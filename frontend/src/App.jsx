@@ -112,7 +112,7 @@ export default function GlobalWealthComparator() {
       </DialogTrigger>
       <DialogContent className="w-full max-w-[90vw] sm:max-w-[600px] md:max-w-[900px] lg:max-w-[1200px] bg-white rounded-2xl shadow-lg p-6 h-[60vh] flex flex-col">
         <DialogTitle>{label}</DialogTitle>
-        <DialogDescription>Choose a country (continents are labeled inside each column).</DialogDescription>
+        <DialogDescription>Select your country of residence.</DialogDescription>
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto pt-4">
@@ -146,7 +146,7 @@ export default function GlobalWealthComparator() {
                   className="bg-white rounded-2xl shadow-lg p-6 max-h-[80vh] overflow-y-auto"
                 >
                   <DialogTitle>Net Worth</DialogTitle>
-                  <DialogDescription>Select your currency and enter your net worth.</DialogDescription>
+                  <DialogDescription>Select a currency and enter your net worth.</DialogDescription>
                   <div className="pt-0 space-y-2">
                     <div className="flex gap-2 mb-4">
                       <select
