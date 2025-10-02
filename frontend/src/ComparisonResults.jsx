@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 import { Button } from './components/ui/button';
 
@@ -29,34 +29,37 @@ export default function ResultsPage() {
     const TARGET_WIDTH = 960;
     const TARGET_HEIGHT = 640;
     const element = captureRef.current;
-    const originalWidth = element.style.width;
-    const originalMinHeight = element.style.minHeight;
+    const originalInlineStyle = element.getAttribute('style');
 
     element.style.width = `${TARGET_WIDTH}px`;
-    element.style.minHeight = `${TARGET_HEIGHT}px`;
+    element.style.height = `${TARGET_HEIGHT}px`;
+    element.style.display = 'flex';
+    element.style.flexDirection = 'column';
 
     await new Promise((resolve) => requestAnimationFrame(resolve));
 
     try {
-      const canvas = await html2canvas(element, {
+      const dataUrl = await toPng(element, {
+        cacheBust: true,
         backgroundColor: '#f9f7f3',
         width: TARGET_WIDTH,
         height: TARGET_HEIGHT,
-        windowWidth: TARGET_WIDTH,
-        windowHeight: TARGET_HEIGHT,
-        scale: window.devicePixelRatio || 1,
+        pixelRatio: 2,
       });
 
       const link = document.createElement('a');
       link.download = 'wealth-comparison.png';
-      link.href = canvas.toDataURL('image/png');
+      link.href = dataUrl;
       link.click();
     } catch (error) {
       console.error('Screenshot capture failed:', error);
       alert('Could not capture the screenshot. Please try again.');
     } finally {
-      element.style.width = originalWidth;
-      element.style.minHeight = originalMinHeight;
+      if (originalInlineStyle) {
+        element.setAttribute('style', originalInlineStyle);
+      } else {
+        element.removeAttribute('style');
+      }
     }
   };
 
@@ -70,7 +73,7 @@ export default function ResultsPage() {
       .attr('viewBox', `0 0 ${width} ${height}`)
       .attr('preserveAspectRatio', 'xMidYMid meet')
       .classed('w-full', true)
-      .classed('h-auto', true);
+      .classed('h-full', true);
 
     svg.selectAll('*').remove();
 
@@ -154,12 +157,14 @@ export default function ResultsPage() {
       <div className="w-full flex flex-col items-center gap-6">
         <div
           ref={captureRef}
-          className="w-full max-w-[960px] bg-white/90 border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6"
+          className="w-full max-w-[960px] bg-white/90 border border-neutral-200 rounded-2xl shadow-sm p-6 flex flex-col gap-6"
         >
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-center">{titleText}</h1>
           </div>
-          <svg id="world-map" className="w-full h-auto" />
+          <div className="flex-1 min-h-[360px]">
+            <svg id="world-map" className="w-full h-full" />
+          </div>
         </div>
         <div className="flex flex-col items-center gap-3">
           <Button
