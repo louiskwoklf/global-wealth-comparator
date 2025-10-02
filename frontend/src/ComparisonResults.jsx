@@ -20,6 +20,25 @@ export default function ResultsPage() {
   const resolvedMonth = timestampMonth || referenceMonth;
   const resolvedYear = timestampYear || referenceYear;
   const timestampLabel = resolvedMonth && resolvedYear ? `${resolvedMonth} ${resolvedYear}` : null;
+  const monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+  const monthIndex = resolvedMonth ? monthNames.indexOf(resolvedMonth) : -1;
+  const numericTimestamp =
+    resolvedYear && monthIndex >= 0
+      ? `${resolvedYear}-${String(monthIndex + 1).padStart(2, '0')}`
+      : null;
   const titleText = `Wealth Comparison Results${timestampLabel ? ` (${timestampLabel})` : ''}`;
   const captureRef = useRef(null);
 
@@ -48,7 +67,7 @@ export default function ResultsPage() {
       });
 
       const link = document.createElement('a');
-      link.download = 'wealth-comparison.png';
+      link.download = `wealth-comparison-${numericTimestamp || 'latest'}.png`;
       link.href = dataUrl;
       link.click();
     } catch (error) {
