@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
+import html2canvas from 'html2canvas';
+
+import { Button } from './components/ui/button';
 
 import nameToNumeric from './country_name_to_numeric.js';
 
@@ -17,6 +20,45 @@ export default function ResultsPage() {
   const resolvedMonth = timestampMonth || referenceMonth;
   const resolvedYear = timestampYear || referenceYear;
   const timestampLabel = resolvedMonth && resolvedYear ? `${resolvedMonth} ${resolvedYear}` : null;
+  const titleText = `Wealth Comparison Results${timestampLabel ? ` (${timestampLabel})` : ''}`;
+  const captureRef = useRef(null);
+
+  const handleScreenshot = async () => {
+    if (!captureRef.current) return;
+
+    const TARGET_WIDTH = 960;
+    const TARGET_HEIGHT = 640;
+    const element = captureRef.current;
+    const originalWidth = element.style.width;
+    const originalMinHeight = element.style.minHeight;
+
+    element.style.width = `${TARGET_WIDTH}px`;
+    element.style.minHeight = `${TARGET_HEIGHT}px`;
+
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    try {
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#f9f7f3',
+        width: TARGET_WIDTH,
+        height: TARGET_HEIGHT,
+        windowWidth: TARGET_WIDTH,
+        windowHeight: TARGET_HEIGHT,
+        scale: window.devicePixelRatio || 1,
+      });
+
+      const link = document.createElement('a');
+      link.download = 'wealth-comparison.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (error) {
+      console.error('Screenshot capture failed:', error);
+      alert('Could not capture the screenshot. Please try again.');
+    } finally {
+      element.style.width = originalWidth;
+      element.style.minHeight = originalMinHeight;
+    }
+  };
 
   useEffect(() => {
     if (!results.length || !d3.select('#world-map').node()) return;
@@ -108,19 +150,30 @@ export default function ResultsPage() {
   if (!results.length) return <p>Loading results or no results to display...</p>;
 
   return (
-    <div className="min-h-screen bg-[#f9f7f3] text-neutral-800 flex flex-col items-center justify-center p-4 space-y-6">
-      <div className="w-full max-w-sm space-y-6 text-center">
-        <h1 className="text-2xl font-semibold text-center">Wealth Comparison Results</h1>
-        {timestampLabel && (
-          <p className="text-sm text-gray-600">
-            Wealth timestamp: {timestampLabel}.
-          </p>
-        )}
-        <Link to="/" className="mt-4 inline-block text-blue-600 hover:underline cursor-pointer">
-          ← Compare again
-        </Link>
+    <div className="min-h-screen bg-[#f9f7f3] text-neutral-800 flex items-center justify-center p-4">
+      <div className="w-full flex flex-col items-center gap-6">
+        <div
+          ref={captureRef}
+          className="w-full max-w-[960px] bg-white/90 border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6"
+        >
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold text-center">{titleText}</h1>
+          </div>
+          <svg id="world-map" className="w-full h-auto" />
+        </div>
+        <div className="flex flex-col items-center gap-3">
+          <Button
+            onClick={handleScreenshot}
+            className="bg-black text-white border border-transparent hover:bg-gray-500 hover:text-black hover:border-gray-800 transition-colors duration-200 ease-in-out"
+            type="button"
+          >
+            Download Screenshot
+          </Button>
+          <Link to="/" className="text-blue-600 hover:underline cursor-pointer">
+            ← Compare again
+          </Link>
+        </div>
       </div>
-      <svg id="world-map" className="mt-8 w-full h-auto" />
     </div>
   );
 }
