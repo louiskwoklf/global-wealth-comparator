@@ -17,6 +17,8 @@ export default function GlobalWealthComparator() {
   const [residence, setResidence] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [netWorth, setNetWorth] = useState("");
+  const [timestampMonth, setTimestampMonth] = useState("");
+  const [timestampYear, setTimestampYear] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleNetWorthChange = (e) => {
@@ -37,7 +39,22 @@ export default function GlobalWealthComparator() {
   const [residenceGroups, setResidenceGroups] = useState({});
   const navigate = useNavigate();
   
-  const isFormValid = netWorth !== '' && netWorth !== '-' && residence !== '';
+  const isFormValid = netWorth !== '' && netWorth !== '-' && residence !== '' && timestampMonth !== '' && timestampYear !== '';
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const years = ["2026", "2025", "2024", "2023"];
 
   useEffect(() => {
     fetch("/api/residence-countries")
@@ -56,7 +73,13 @@ export default function GlobalWealthComparator() {
     setIsLoading(true);
 
     const rawNetWorth = netWorth.replace(/,/g, '');
-    const payload = { currency, netWorth: rawNetWorth, residence };
+    const payload = {
+      currency,
+      netWorth: rawNetWorth,
+      residence,
+      timestampMonth,
+      timestampYear,
+    };
 
     try {
       const res = await fetch("/api/submit", {
@@ -71,7 +94,13 @@ export default function GlobalWealthComparator() {
       }
 
       const json = await res.json();
-      navigate('/results', { state: { results: json.results } });
+      navigate('/results', {
+        state: {
+          results: json.results,
+          timestampMonth,
+          timestampYear,
+        },
+      });
     } catch (err) {
       console.error("Submission error:", err);
       alert(err.message);
@@ -100,6 +129,51 @@ export default function GlobalWealthComparator() {
         </div>
       ))}
     </div>
+  );
+
+  const OptionDialog = ({
+    label,
+    value,
+    options,
+    onSelect,
+    description,
+    gridClassName = "grid grid-cols-1 gap-2",
+  }) => (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          variant="outline"
+          className="w-full justify-between focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+          type="button"
+        >
+          {value || `Select ${label}`}
+          <ChevronDown className="ml-2 h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        className="bg-white rounded-2xl shadow-lg p-6 max-h-[80vh] overflow-y-auto"
+      >
+        <DialogTitle>{label}</DialogTitle>
+        <DialogDescription>
+          {description || `Select a ${label.toLowerCase()}.`}
+        </DialogDescription>
+        <div className={`mt-4 ${gridClassName}`}>
+          {options.map((option) => (
+            <DialogClose asChild key={option}>
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-left whitespace-nowrap border rounded-md px-3 py-2 hover:bg-gray-600 hover:text-white hover:border-gray-800 transition-colors duration-200 ease-in-out cursor-pointer focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                onClick={() => onSelect(option)}
+                type="button"
+              >
+                {option}
+              </Button>
+            </DialogClose>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 
   const Popup = ({ value, onSelect, label, groups }) => (
@@ -178,6 +252,34 @@ export default function GlobalWealthComparator() {
                   </div>
                 </DialogContent>
               </Dialog>
+            </div>
+
+            {/* Wealth Timestamp */}
+            <div>
+              <label className="block text-sm font-medium mb-1 text-center">
+                Wealth Timestamp
+              </label>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="w-full sm:w-1/2">
+                  <OptionDialog
+                    label="Month"
+                    value={timestampMonth}
+                    options={months}
+                    onSelect={setTimestampMonth}
+                    description="Choose the month for your wealth timestamp."
+                    gridClassName="grid grid-cols-2 gap-2"
+                  />
+                </div>
+                <div className="w-full sm:w-1/2">
+                  <OptionDialog
+                    label="Year"
+                    value={timestampYear}
+                    options={years}
+                    onSelect={setTimestampYear}
+                    description="Choose the year for your wealth timestamp."
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Country of Residence */}

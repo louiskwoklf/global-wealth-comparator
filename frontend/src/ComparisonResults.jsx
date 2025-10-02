@@ -8,6 +8,15 @@ import nameToNumeric from './country_name_to_numeric.js';
 export default function ResultsPage() {
   const { state } = useLocation();
   const [results, setResults] = useState(state?.results || []);
+  const {
+    timestampMonth,
+    timestampYear,
+    referenceMonth,
+    referenceYear,
+  } = state || {};
+  const resolvedMonth = timestampMonth || referenceMonth;
+  const resolvedYear = timestampYear || referenceYear;
+  const timestampLabel = resolvedMonth && resolvedYear ? `${resolvedMonth} ${resolvedYear}` : null;
 
   useEffect(() => {
     if (!results.length || !d3.select('#world-map').node()) return;
@@ -102,6 +111,11 @@ export default function ResultsPage() {
     <div className="min-h-screen bg-[#f9f7f3] text-neutral-800 flex flex-col items-center justify-center p-4 space-y-6">
       <div className="w-full max-w-sm space-y-6 text-center">
         <h1 className="text-2xl font-semibold text-center">Wealth Comparison Results</h1>
+        {timestampLabel && (
+          <p className="text-sm text-gray-600">
+            Wealth timestamp: {timestampLabel}.
+          </p>
+        )}
         <Link to="/" className="mt-4 inline-block text-blue-600 hover:underline cursor-pointer">
           ← Compare again
         </Link>
