@@ -169,10 +169,10 @@ export default function ResultsPage() {
         <div className="flex flex-col items-center gap-3">
           <Button
             onClick={handleScreenshot}
-            className="bg-black text-white border border-transparent hover:bg-gray-500 hover:text-black hover:border-gray-800 transition-colors duration-200 ease-in-out"
+            className="bg-black text-white border border-transparent hover:bg-gray-500 hover:text-black hover:border-gray-800 transition-colors duration-200 ease-in-out cursor-pointer"
             type="button"
           >
-            Download Screenshot
+            Download Wealth Snapshot
           </Button>
           <Link to="/" className="text-blue-600 hover:underline cursor-pointer">
             ← Compare again
