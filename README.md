@@ -1,1 +1,1 @@
-# global-wealth-comparator
+# global-wealth-comparator-v1
